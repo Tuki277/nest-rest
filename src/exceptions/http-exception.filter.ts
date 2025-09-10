@@ -4,13 +4,6 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  BadRequestException,
-  NotFoundException,
-  ConflictException,
-  UnsupportedMediaTypeException,
-  UnauthorizedException,
-  ForbiddenException,
-  RequestTimeoutException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import {
@@ -19,49 +12,72 @@ import {
   QueryFailedError,
 } from 'typeorm';
 
-@Catch(HttpException, QueryFailedError, EntityNotFoundError)
+interface ErrorResponse {
+  success: boolean;
+  status_code: number;
+  path: string;
+  message: string[];
+}
+
+@Catch(
+  HttpException,
+  QueryFailedError,
+  EntityNotFoundError,
+  CannotCreateEntityIdMapError,
+)
 export class HttpExceptionFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
+  private readonly errorStatusMap: Record<string, HttpStatus> = {
+    QueryFailedError: HttpStatus.UNPROCESSABLE_ENTITY,
+    EntityNotFoundError: HttpStatus.UNPROCESSABLE_ENTITY,
+    CannotCreateEntityIdMapError: HttpStatus.UNPROCESSABLE_ENTITY,
+  };
+
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    let message = '';
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-
-    switch (exception.constructor) {
-      case HttpException:
-      case BadRequestException:
-      case NotFoundException:
-      case ConflictException:
-      case UnsupportedMediaTypeException:
-      case UnauthorizedException:
-      case ForbiddenException:
-      case RequestTimeoutException:
-        status = (exception as HttpException).getStatus();
-        message = exception['response']['message'];
-        break;
-      case QueryFailedError: // this is a TypeOrm error
-        status = HttpStatus.UNPROCESSABLE_ENTITY;
-        message = (exception as QueryFailedError).message;
-        break;
-      case EntityNotFoundError: // this is another TypeOrm error
-        status = HttpStatus.UNPROCESSABLE_ENTITY;
-        message = (exception as EntityNotFoundError).message;
-        break;
-      case CannotCreateEntityIdMapError: // and another
-        status = HttpStatus.UNPROCESSABLE_ENTITY;
-        message = (exception as CannotCreateEntityIdMapError).message;
-        break;
-      default:
-        status = HttpStatus.INTERNAL_SERVER_ERROR;
-    }
-
-    response.status(status).json({
-      statusCode: status,
-      timestamp: new Date().toISOString(),
+    const { status, message } = this.handleException(exception);
+    const errorResponse: ErrorResponse = {
+      success: false,
+      status_code: status,
       path: request.url,
       message,
-    });
+    };
+
+    response.status(status).json(errorResponse);
+  }
+
+  private handleException(exception: unknown): {
+    status: number;
+    message: string[];
+  } {
+    if (exception instanceof HttpException) {
+      return {
+        status: exception.getStatus(),
+        message: this.extractHttpExceptionMessage(exception),
+      };
+    }
+
+    const exceptionName = (exception as any)?.constructor?.name;
+    const status =
+      this.errorStatusMap[exceptionName] || HttpStatus.INTERNAL_SERVER_ERROR;
+    const message = (exception as any)?.message || 'Internal server error';
+
+    return {
+      status,
+      message: Array.isArray(message) ? message : [message],
+    };
+  }
+
+  private extractHttpExceptionMessage(exception: HttpException): string[] {
+    const response = exception.getResponse();
+    const message =
+      typeof response === 'object' && 'message' in response
+        ? response.message
+        : exception.message;
+
+    // Ensure the message is always a string array
+    return Array.isArray(message) ? message : [message as string];
   }
 }

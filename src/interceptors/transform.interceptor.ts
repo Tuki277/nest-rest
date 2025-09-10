@@ -8,8 +8,10 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface Response<T> {
-  statusCode: number;
+  success: boolean;
+  status_code: number;
   message: string;
+  request_id: string;
   data: T;
 }
 
@@ -23,9 +25,10 @@ export class TransformInterceptor<T>
   ): Observable<Response<T>> {
     return next.handle().pipe(
       map((data) => ({
-        statusCode: context.switchToHttp().getResponse().statusCode,
-        reqId: context.switchToHttp().getRequest().reqId,
-        message: data?.message || 'OK',
+        success: true,
+        status_code: context.switchToHttp().getResponse().statusCode,
+        request_id: context.switchToHttp().getRequest().reqId,
+        message: data?.message || 'ok',
         data: data || {},
       })),
     );

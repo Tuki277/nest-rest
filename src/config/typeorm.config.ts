@@ -1,4 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { User } from 'src/modules/users/entities/user.entity';
 
 export const typeORMConfig: TypeOrmModuleOptions = {
   parseInt8: true,
@@ -10,5 +11,5 @@ export const typeORMConfig: TypeOrmModuleOptions = {
   database: process.env.POSTGRES_DATABASE,
   synchronize: process.env.POSTGRES_SYNC === 'true',
   logging: process.env.POSTGRES_LOGGING === 'true',
-  entities: [],
+  entities: [User],
 };

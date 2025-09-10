@@ -6,10 +6,10 @@ export function configSwagger(app: INestApplication) {
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'auth',
     )
-    .setTitle('Daily step API docs')
+    .setTitle('iKame solution team - base API NestJS')
     .setDescription('API description')
+    .setContact('HuyTH', '', 'huyth@ikameglobal.com')
     .setVersion('0.1')
-    .addTag('check-health')
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

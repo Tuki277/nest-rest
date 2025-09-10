@@ -7,10 +7,13 @@ import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { TimeoutInterceptor } from './interceptors/timeout.interceptor';
 import { configSwagger } from './config/api-docs.config';
 import helmet from 'helmet';
+// import * as csurf from 'csurf';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(helmet());
+
+  // app.use(csurf({ cookie: false }));
 
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new HttpExceptionFilter());

@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { RoleType } from '../common/enum';
+import { EAppRoles } from 'src/common/enum';
 
 export const ROLES_KEY = 'roles';
-export const Roles = (...roles: RoleType[]) => SetMetadata(ROLES_KEY, roles);
+export const Roles = (...roles: EAppRoles[]) => SetMetadata(ROLES_KEY, roles);
