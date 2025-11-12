@@ -4,7 +4,8 @@ import { Entity, Column, DeepPartial, BaseEntity } from 'typeorm';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
-  @Column('bigint', {
+  @Column({
+    type: 'text',
     primary: true,
     unsigned: true,
   })

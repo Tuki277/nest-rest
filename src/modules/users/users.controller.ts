@@ -26,6 +26,7 @@ export class UsersController {
   @Roles(EAppRoles.ADMIN)
   findOneUser(@Req() request) {
     const { user } = request;
+    console.log(request.user);
     return {
       id: user.id,
       email: user.email,
